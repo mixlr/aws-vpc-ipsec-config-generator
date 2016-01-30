@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>AWS VPN connection config generator</title>
+    <meta name="description" content="Automatically generate IPsec-tools config files for AWS VPN"/>
+
+    <script src="js/jquery.js"></script>
+    <script src="js/mustache.min.js"></script>
+    <script src="js/application.js"></script>
+
+    <style>
+      button, label { display:block; }
+
+      label { margin-top:1em }
+
+      input[type=text] { width:250px; }
+      input[type=submit] { display:block; }
+    </style>
+
+<script id="racoon_conf_template" type="x-tmpl-mustache">
+log debug;
+path pre_shared_key "/etc/racoon/psk.txt";
+
+remote {{outside_vpg_ip1}} {
+        exchange_mode main;
+        lifetime time 28800 seconds;
+        proposal {
+                encryption_algorithm aes128;
+                hash_algorithm sha1;
+                authentication_method pre_shared_key;
+                dh_group 2;
+        }
+        generate_policy off;
+}
+
+remote {{outside_vpg_ip2}} {
+        exchange_mode main;
+        lifetime time 28800 seconds;
+        proposal {
+                encryption_algorithm aes128;
+                hash_algorithm sha1;
+                authentication_method pre_shared_key;
+                dh_group 2;
+        }
+        generate_policy off;
+}
+
+sainfo address {{inside_cg_ip1}} any address {{inside_vpg_ip1}} any {
+    pfs_group 2;
+    lifetime time 3600 seconds;
+    encryption_algorithm aes128;
+    authentication_algorithm hmac_sha1;
+    compression_algorithm deflate;
+}
+
+sainfo address {{inside_cg_ip2}} any address {{inside_vpg_ip2}} any {
+    pfs_group 2;
+    lifetime time 3600 seconds;
+    encryption_algorithm aes128;
+    authentication_algorithm hmac_sha1;
+    compression_algorithm deflate;
+}
+
+sainfo address {{remote_cidr}} any address {{aws_cidr}} any {
+    pfs_group 2;
+    lifetime time 3600 seconds;
+    encryption_algorithm aes128;
+    authentication_algorithm hmac_sha1;
+    compression_algorithm deflate;
+}
+</script>
+
+<script id="ipsec_tools_conf_template" type="x-tmpl-mustache">
+flush;
+spdflush;
+
+# Generic routing
+spdadd {{remote_cidr}} {{aws_cidr}} any -P out ipsec esp/tunnel/{{outside_cg_ip1}}-{{outside_vpg_ip1}}/require;
+spdadd {{aws_cidr}} {{remote_cidr}} any -P in  ipsec esp/tunnel/{{outside_vpg_ip1}}-{{outside_cg_ip1}}/require;
+
+# Tunnel 1
+spdadd {{inside_cg_ip1}} {{inside_vpg_ip1}} any -P out ipsec esp/tunnel/{{outside_cg_ip1}}-{{outside_vpg_ip1}}/require;
+spdadd {{inside_vpg_ip1}} {{inside_cg_ip1}} any -P in  ipsec esp/tunnel/{{outside_vpg_ip1}}-{{outside_cg_ip1}}/require;
+
+spdadd {{inside_cg_ip1}} {{remote_network}} any -P out ipsec esp/tunnel/{{outside_cg_ip1}}-{{outside_vpg_ip1}}/require;
+spdadd {{remote_network}} {{inside_cg_ip1}} any -P in  ipsec esp/tunnel/{{outside_vpg_ip1}}-{{outside_cg_ip1}}/require;
+
+# Tunnel 2
+spdadd {{inside_cg_ip2}} {{inside_vpg_ip2}} any -P out ipsec esp/tunnel/{{outside_cg_ip2}}-{{outside_vpg_ip2}}/require;
+spdadd {{inside_vpg_ip2}} {{inside_cg_ip2}} any -P in  ipsec esp/tunnel/{{outside_vpg_ip2}}-{{outside_cg_ip2}}/require;
+
+spdadd {{inside_cg_ip2}} {{remote_network}} any -P out ipsec esp/tunnel/{{outside_cg_ip2}}-{{outside_vpg_ip2}}/require;
+spdadd {{remote_network}} {{inside_cg_ip2}} any -P in  ipsec esp/tunnel/{{outside_vpg_ip2}}-{{outside_cg_ip2}}/require;
+</script>
+
+<script id="psk_template" type="x-tmpl-mustache">
+{{outside_vpg_ip1}} {{psk1}}
+{{outside_vpg_ip2}} {{psk2}}
+</script>
+  </head>
+
+  <body>
+    <h1>AWS VPN connection config generator</h1>
+
+    <p>This tool automatically generates configuration files for <a href="http://ipsec-tools.sourceforge.net/">IPsec tools</a>. These configuration files will allow you to easily and securely link an external private network to your AWS VPC.</p>
+
+    <p><strong>No data is transmitted over the network.</strong></p>
+
+    <h2>Your network and configuration details</h2>
+
+    <form action="#">
+      <label for="aws_network">Enter your AWS VPC network CIDR</label>
+      <input id="aws_network" placeholder="Example: 172.18.0.0/12" type="text"/>
+
+      <label for="remote_network">Enter your remote network CIDR</label>
+      <input id="remote_network" placeholder="Example: 10.1.0.0/12" type="text"/>
+
+      <label for="config">Paste your AWS VPN connection configuration file (Generic/Vendor Agnostic)</label>
+
+      <textarea cols="100" rows="10" id="config"></textarea>
+      <input type="submit" value="Generate config files"/>
+    </form>
+
+    <h2>/etc/ipsec-tools.conf</h2>
+    <textarea cols="100" rows="20" id="ipsec_tools_conf" readonly></textarea>
+
+    <h2>/etc/racoon/racoon.conf</h2>
+    <textarea cols="100" rows="20" id="racoon_conf" readonly></textarea>
+
+    <h2>/etc/racoon/psk.txt</h2>
+    <textarea cols="100" rows="10" id="psk_txt" readonly></textarea>
+  </body>
+</html>
