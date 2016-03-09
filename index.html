@@ -82,15 +82,15 @@ spdadd {{aws_cidr}} {{remote_cidr}} any -P in  ipsec esp/tunnel/{{outside_vpg_ip
 spdadd {{inside_cg_ip1}} {{inside_vpg_ip1}} any -P out ipsec esp/tunnel/{{outside_cg_ip1}}-{{outside_vpg_ip1}}/require;
 spdadd {{inside_vpg_ip1}} {{inside_cg_ip1}} any -P in  ipsec esp/tunnel/{{outside_vpg_ip1}}-{{outside_cg_ip1}}/require;
 
-spdadd {{inside_cg_ip1}} {{remote_network}} any -P out ipsec esp/tunnel/{{outside_cg_ip1}}-{{outside_vpg_ip1}}/require;
-spdadd {{remote_network}} {{inside_cg_ip1}} any -P in  ipsec esp/tunnel/{{outside_vpg_ip1}}-{{outside_cg_ip1}}/require;
+spdadd {{inside_cg_ip1}} {{remote_cidr}} any -P out ipsec esp/tunnel/{{outside_cg_ip1}}-{{outside_vpg_ip1}}/require;
+spdadd {{remote_cidr}} {{inside_cg_ip1}} any -P in  ipsec esp/tunnel/{{outside_vpg_ip1}}-{{outside_cg_ip1}}/require;
 
 # Tunnel 2
 spdadd {{inside_cg_ip2}} {{inside_vpg_ip2}} any -P out ipsec esp/tunnel/{{outside_cg_ip2}}-{{outside_vpg_ip2}}/require;
 spdadd {{inside_vpg_ip2}} {{inside_cg_ip2}} any -P in  ipsec esp/tunnel/{{outside_vpg_ip2}}-{{outside_cg_ip2}}/require;
 
-spdadd {{inside_cg_ip2}} {{remote_network}} any -P out ipsec esp/tunnel/{{outside_cg_ip2}}-{{outside_vpg_ip2}}/require;
-spdadd {{remote_network}} {{inside_cg_ip2}} any -P in  ipsec esp/tunnel/{{outside_vpg_ip2}}-{{outside_cg_ip2}}/require;
+spdadd {{inside_cg_ip2}} {{remote_cidr}} any -P out ipsec esp/tunnel/{{outside_cg_ip2}}-{{outside_vpg_ip2}}/require;
+spdadd {{remote_cidr}} {{inside_cg_ip2}} any -P in  ipsec esp/tunnel/{{outside_vpg_ip2}}-{{outside_cg_ip2}}/require;
 </script>
 
 <script id="psk_template" type="x-tmpl-mustache">
