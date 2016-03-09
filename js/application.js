@@ -35,6 +35,9 @@
     data['outside_vpg_ip2'] = vpgIps[2];
     data['inside_vpg_ip2'] = vpgIps[3];
 
+    data['inside_vpg_ip1_short'] = vpgIps[1].split('/')[0]
+    data['inside_vpg_ip2_short'] = vpgIps[3].split('/')[0]
+
     var cgIps = scan(/Customer Gateway\s+:\s+(\d+\.\d+\.\d+\.\d+(?:\/\d+)?)/g, config);
     if(cgIps.length != 4) {
       return false;
@@ -79,6 +82,12 @@
     $('#psk_txt').text(rendered);
   }
 
+  function generateRestartTunnel() {
+    var template = $('#restart_tunnel_template').text();
+    var rendered = $.trim(Mustache.render(template, data));
+    $('#restart_tunnel').html(rendered);
+  }
+
   $(document).ready(function() {
     $('form').submit(function(e) {
       e.preventDefault();
@@ -87,6 +96,7 @@
         generateIpsecToolsConf();
         generateRacoonConf();
         generatePskTxt();
+        generateRestartTunnel();
       } else {
         fail();
       }

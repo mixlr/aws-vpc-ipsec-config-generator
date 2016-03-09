@@ -97,6 +97,19 @@ spdadd {{remote_network}} {{inside_cg_ip2}} any -P in  ipsec esp/tunnel/{{outsid
 {{outside_vpg_ip1}} {{psk1}}
 {{outside_vpg_ip2}} {{psk2}}
 </script>
+
+<script id="restart_tunnel_template" type="x-tmpl-mustache">
+ip a a {{inside_cg_ip1}} dev eth0
+ip a a {{inside_cg_ip2}} dev eth0
+
+/etc/init.d/racoon stop
+/etc/init.d/setkey stop
+/etc/init.d/racoon start
+/etc/init.d/setkey start
+
+ping -c4 {{inside_vpg_ip1_short}}
+ping -c4 {{inside_vpg_ip2_short}}
+</script>
   </head>
 
   <body>
@@ -129,5 +142,8 @@ spdadd {{remote_network}} {{inside_cg_ip2}} any -P in  ipsec esp/tunnel/{{outsid
 
     <h2>/etc/racoon/psk.txt</h2>
     <textarea cols="100" rows="10" id="psk_txt" readonly></textarea>
+
+    <h2>restart_tunnel.sh</h2>
+    <textarea cols="100" rows="10" id="restart_tunnel" readonly></textarea>
   </body>
 </html>
